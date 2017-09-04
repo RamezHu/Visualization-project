@@ -8,7 +8,7 @@ path {
   cursor: pointer;
 }
 </style>
-<script src="http://d3js.org/d3.v3.min.js"></script>
+<script src="https://d3js.org/d3.v3.min.js" charset="utf-8"></script>
 </head>
 <body>
 <script>
@@ -31,7 +31,7 @@ var y = d3.scale.sqrt()
 
 	
 //return a rainbow of color options for our sunburst.
-var color = d3.scale.category10();
+var colors = d3.scale.category10();
 
 var svg = d3.select("body").append("svg")
     .attr("width", width+500)
@@ -113,7 +113,7 @@ var g = svg.selectAll("g")
 var path = g.append("path")
     .attr("d", arc)
     .style("fill", function (d) {
-	if(d.depth < 2) return color((d.children ? d : d.parent).name);
+	if(d.depth < 2) return colors((d.children ? d : d.parent).name);
 	return "none";
     })
     .on("click", ClickOn);
@@ -144,62 +144,53 @@ function ClickOn(d) {
     path.transition()
         .duration(100)
 		.style("fill", function (d) {
-		if(d.depth < 2) return color((d.children ? d : d.parent).name);
+		if(d.depth < 2) return colors((d.children ? d : d.parent).name);
 		return "none";
 		})
         .attrTween("d", arcTween(d))
-        .each("end", function (m) {
-        
-	
-        if (m.x >= d.x && m.x < (d.x + d.dx)) {
-	
-            
+        .each("end", function (m) {      
+        if (m.x >= d.x && m.x < (d.x + d.dx)) {           
             var arcText = d3.select(this.parentNode).select("text");           
             arcText.transition().duration(100)
-                .attr("opacity", 1)
-                .attr("transform", function () {
-                return "rotate(" + (x(m.x + m.dx / 2) - Math.PI / 2)/ Math.PI * 180 + ")"
-            })
-                .attr("x", function (d) { return y(d.y);});
-        }
-    });
-	}else
+                .attr({"opacity": 1,
+					  "transform": function () {return "rotate(" + (x(m.x + m.dx / 2) - Math.PI / 2)/ Math.PI * 180 + ")"},
+					  "x": function (d) { return y(d.y);}})
+}});
+}else
 	{
+	if(!(d.size == undefined)) {d.size += 100;};
+    text.transition().attr("opacity", 0);
 		 path.transition()
         .duration(100)
 		.style("fill", function (d) {
-		 return color((d.children ? d : d.parent).name);			
+		 return colors((d.children ? d : d.parent).name);			
 			})
         .attrTween("d", arcTween(d))
         .each("end", function (m) {       
-	
         if (m.x >= d.x && m.x < (d.x + d.dx)) {
 	          
             var arcText = d3.select(this.parentNode).select("text");           
             arcText.transition().duration(100)
-                .attr("opacity", 1)
-                .attr("transform", function () {
-                return "rotate(" + (x(m.x + m.dx / 2) - Math.PI / 2)/ Math.PI * 180 + ")"
-            })
-                .attr("x", function (d) { return y(d.y);});
-                
-        }
-    });	
+                .attr({"opacity": 1,
+					  "transform": function () {return "rotate(" + (x(m.x + m.dx / 2) - Math.PI / 2)/ Math.PI * 180 + ")"},
+					  "x": function (d) { return y(d.y);}})
+}});
 	}
 } 
 
 });
 // Interpolate the scales!
 function arcTween(d) {
-    var xd = d3.interpolate(x.domain(), [d.x, d.x + d.dx]),
-        yd = d3.interpolate(y.domain(), [d.y, 1]),
-        yr = d3.interpolate(y.range(), [d.y ? 20 : 0, radius]);
-    return function (d, i) {
-        return i ? function (t) {
+	var dx,dy,ry;
+		dx = d3.interpolate(x.domain(), [d.x, d.x + d.dx]);
+        dy = d3.interpolate(y.domain(), [d.y, 1]);
+        ry = d3.interpolate(y.range(), [d.y ? 20 : 0, radius]);
+		return function (d, z) {
+		return z ? function (m) {
             return arc(d);
-        } : function (t) {
-            x.domain(xd(t));
-            y.domain(yd(t)).range(yr(t));
+        } : function (m) {
+            x.domain(dx(m));
+            y.domain(dy(m)).range(ry(m));
             return arc(d);
         };
 	};
